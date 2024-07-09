@@ -39,6 +39,7 @@ from net_crypto import (
     AuxiliarySecurityHeader,
     CryptoEngine,
     MacCryptoMaterialCreator,
+    Mode2CryptoMaterialCreator
 )
 
 
@@ -345,9 +346,15 @@ class MacFrame:
                 message_info.source_mac_address = DeviceDescriptors.get_extended(src_address).mac_address
             else:
                 message_info.source_mac_address = src_address.mac_address
+            
 
-            sec_obj = CryptoEngine(MacCryptoMaterialCreator(config.DEFAULT_NETWORK_KEY))
-            self.payload = MacPayload(bytearray(open_payload) + sec_obj.decrypt(private_payload, mic, message_info))
+            # Handling the decryption of mle.announce frames and other frames differently
+            if message_info.aux_sec_hdr.key_id == b'\xff\xff\xff\xff\xff': 
+                sec_obj = CryptoEngine(Mode2CryptoMaterialCreator())
+                self.payload = MacPayload(bytearray(open_payload) + sec_obj.decrypt(private_payload, mic, message_info))
+            else: 
+                sec_obj = CryptoEngine(MacCryptoMaterialCreator(config.DEFAULT_NETWORK_KEY))
+                self.payload = MacPayload(bytearray(open_payload) + sec_obj.decrypt(private_payload, mic, message_info))
 
         else:
             self.payload = MacPayload(payload)
