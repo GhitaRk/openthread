@@ -517,6 +517,14 @@ class UDPHeader(ConvertibleToBytes, BuildableFromBytes):
 
     def __len__(self):
         return self._header_length
+    
+    def __repr__(self):
+        return "UDPHeader(source_port={}, destination_port={}, payload_length={}, checksum={})".format(
+            self.src_port,
+            self.dst_port,
+            self._payload_length,
+            self.checksum
+        )
 
 
 class UDPDatagram(UpperLayerProtocol):
@@ -583,6 +591,13 @@ class ICMPv6Header(ConvertibleToBytes, BuildableFromBytes):
 
     def __len__(self):
         return self._header_length
+    
+    def __repr__(self):
+        return "ICMPv6Header(Type={}, Code={}, checksum={})".format(
+            self.type,
+            self.code,
+            self.checksum
+        )
 
 
 class ICMPv6(UpperLayerProtocol):
@@ -940,6 +955,11 @@ class IPv6PacketFactory(PacketFactory):
 
     def parse(self, data, message_info):
         ipv6_header = IPv6Header.from_bytes(data)
+
+        # Check for next_header 59 (No Next Header) and skip processing
+        if ipv6_header.next_header == 59:
+            print("Skipping packet with No Next Header (next_header=59)")
+            return None
 
         message_info.source_ipv6 = ipv6_header.source_address
         message_info.destination_ipv6 = ipv6_header.destination_address
