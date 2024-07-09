@@ -298,6 +298,7 @@ def create_default_mle_tlvs_factories():
         mle.TlvType.LINK_METRICS_MANAGEMENT: mle.LinkMetricsManagementFactory(),
         mle.TlvType.LINK_METRICS_REPORT: mle.LinkMetricsReportFactory(),
         mle.TlvType.LINK_PROBE: mle.LinkProbeFactory(),
+        mle.TlvType.SUPERVISION_INTERVAL: mle.SupervisionIntervalFactory(),
     }
 
 
@@ -442,6 +443,9 @@ def create_default_uri_path_based_payload_factories():
         '/n/mr': network_layer_tlvs_factory,
         '/n/dr': network_layer_tlvs_factory,
         '/n/dn': network_layer_tlvs_factory,
+        # Add for the tests
+        '/test-resource' : network_layer_tlvs_factory,
+        '/test' : network_layer_tlvs_factory,
     }
 
 
