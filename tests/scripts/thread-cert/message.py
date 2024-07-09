@@ -354,9 +354,27 @@ class Message(object):
             self._mac_header.command_type == mac802154.MacHeader.CommandIdentifier.DATA_REQUEST
 
     def __repr__(self):
-        if (self.type == MessageType.DTLS and self.dtls.content_type == dtls.ContentType.HANDSHAKE):
-            return "Message(type={})".format(str(self.dtls.handshake_type))
-        return "Message(type={})".format(MessageType(self.type).name)
+        attributes = [
+            f"type={MessageType(self.type).name}",
+            f"channel={self.channel}",
+            f"mac_header={self.mac_header}",
+            f"ipv6_packet={self.ipv6_packet}"
+        ]
+        # Conditionally add details based on message type
+        if self.type == MessageType.MLE:
+            attributes.append(f"mle={self.mle}")
+        elif self.type == MessageType.COAP:
+            attributes.append(f"coap={self.coap}")
+        elif self.type == MessageType.ICMP:
+            attributes.append(f"icmp={self.icmp}")
+        elif self.type == MessageType.DTLS:
+            dtls_detail = f"dtls(content_type={self.dtls.content_type}, handshake_type={self.dtls.handshake_type})"
+            attributes.append(dtls_detail)
+        elif self.type == MessageType.DATA:
+            attributes.append(f"data_payload={self.data_payload}")
+
+        return "Message({})".format(", ".join(attributes))
+
 
 
 class MessagesSet(object):
@@ -580,6 +598,7 @@ class MessageFactory:
         try:
             message = Message()
             message.channel = struct.unpack(">B", data.read(1))
+            data.seek(0)
 
             # Parse MAC header
             mac_frame = self._parse_mac_frame(data)
@@ -604,7 +623,8 @@ class MessageFactory:
             if message.type == MessageType.MLE:
                 self._add_device_descriptors(message)
 
-            return message.try_extract_dtls_messages()
+            message.try_extract_dtls_messages()
+            return message
 
         except mac802154.KeyIdMode0Exception:
             print('Received packet with key_id_mode = 0, cannot be handled in test scripts')
